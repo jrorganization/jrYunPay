@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qh.pay.dao.AgentMapper">
+	<resultMap type="com.qh.pay.domain.Agent" id="rmAgent">
+		<result property="coinRate" column="coin_rate"
+				typeHandler="com.qh.common.config.JsonTypeHandler" />
+	</resultMap>
+	<sql id="baseCol">`agent_id`,`agent_number`,`status`,`audit_status`,`level`,`parent_agent`,`create_time`,`modify_time`,`agent_name`,`agent_short_name`,`contacts`,`contacts_phone`,`contacts_email`,`contacts_qq`,`coin_rate`,pay_channel_type,CONCAT(level,'级代理') levelName</sql>
+
+	<select id="list" resultMap="rmAgent">
+		select <include refid="baseCol"></include> from agent
+        <where>  
+		  <if test="agentId != null and agentId != ''"> and agent_id = #{agentId} </if>
+		  <if test="agentNumber != null and agentNumber != ''"> and agent_number = #{agentNumber} </if>
+			<if test="agentName != null and agentName != ''"> and agent_name = #{agentName} </if>
+			<if test="status != null and status != ''"> and status = #{status} </if>
+		  <if test="auditStatus != null and auditStatus != ''"> and audit_status = #{auditStatus} </if>
+		  <if test="level != null and level != ''"> and level = #{level} </if>
+			<if test="pAgent != null and pAgent != ''"> and parent_agent = #{pAgent}</if>
+			<if test="payChannelType != null and payChannelType != ''"> and pay_channel_type = #{payChannelType} </if>
+
+		</where>
+        <choose>
+            <when test="sort != null and sort.trim() != ''">
+                order by ${sort} ${order}
+            </when>
+			<otherwise>
+                order by agent_id desc
+			</otherwise>
+        </choose>
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+
+	<select id="listAgentInfo" resultMap="rmAgent">
+		select agent_id,agent_number,agent_name,CONCAT(level,'级代理') levelName from agent
+	</select>
+	
+ 	<select id="count" resultType="int">
+		select count(1) from agent
+		 <where>
+			 <if test="agentId != null and agentId != ''"> and agent_id = #{agentId} </if>
+			 <if test="agentNumber != null and agentNumber != ''"> and agent_number = #{agentNumber} </if>
+			 <if test="agentName != null and agentName != ''"> and agent_name = #{agentName} </if>
+			 <if test="status != null and status != ''"> and status = #{status} </if>
+			 <if test="auditStatus != null and auditStatus != ''"> and audit_status = #{auditStatus} </if>
+			 <if test="level != null and level != ''"> and level = #{level} </if>
+			 <if test="pAgent != null and pAgent != ''"> and parent_agent = #{pAgent}</if>
+			 <if test="payChannelType != null and payChannelType != ''"> and pay_channel_type = #{payChannelType} </if>
+
+		 </where>
+	</select>
+	 
+	<insert id="save" parameterType="com.qh.pay.domain.Agent" useGeneratedKeys="true" keyProperty="agentId">
+		insert into agent
+		(
+			`agent_id`,
+			`agent_number`, 
+			`status`, 
+			`audit_status`, 
+			`level`, 
+			`parent_agent`, 
+			`create_time`, 
+			`modify_time`, 
+			`agent_name`,
+			`agent_short_name`,
+			`contacts`, 
+			`contacts_phone`, 
+			`contacts_email`, 
+			`contacts_qq`, 
+			`coin_rate`,
+			pay_channel_type
+		)
+		values
+		(
+			#{agentId},
+			#{agentNumber}, 
+			#{status}, 
+			#{auditStatus}, 
+			#{level}, 
+			#{parentAgent}, 
+			#{createTime},
+			#{modifyTime},
+			#{agentName},
+			#{agentShortName},
+			#{contacts}, 
+			#{contactsPhone}, 
+			#{contactsEmail}, 
+			#{contactsQq}, 
+			#{coinRate,typeHandler=com.qh.common.config.JsonTypeHandler},
+			#{payChannelType}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.qh.pay.domain.Agent">
+		update agent 
+		<set>
+			<if test="status != null">`status` = #{status}, </if>
+			<if test="auditStatus != null">`audit_status` = #{auditStatus}, </if>
+			<if test="agentName != null">`agent_name` = #{agentName}, </if>
+			<if test="agentShortName != null">`agent_short_name` = #{agentShortName}, </if>
+			<if test="contacts != null">`contacts` = #{contacts}, </if>
+			<if test="contactsPhone != null">`contacts_phone` = #{contactsPhone}, </if>
+			<if test="contactsEmail != null">`contacts_email` = #{contactsEmail}, </if>
+			<if test="contactsQq != null">`contacts_qq` = #{contactsQq}, </if>
+			<if test="payChannelType != null"> pay_channel_type = #{payChannelType},</if>
+			<if test="coinRate != null">`coin_rate` = #{coinRate,typeHandler=com.qh.common.config.JsonTypeHandler}</if>
+		</set>
+		where agent_id = #{agentId}
+	</update>
+	
+	<delete id="remove">
+		delete from agent where agent_id = #{value}
+	</delete>
+	
+	<delete id="batchRemove">
+		delete from agent where agent_id in 
+		<foreach item="agentId" collection="array" open="(" separator="," close=")">
+			#{agentId}
+		</foreach>
+	</delete>
+	<update id="batchqiyong">
+		update agent set status = 1
+		where agent_id in
+		<foreach item="id" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</update>
+	<update id="batchjinyong">
+		update agent set status = 0
+		where agent_id in
+		<foreach item="id" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</update>
+
+	<update id="batchAudit">
+		update agent set audit_status = #{auditStatus}
+		where agent_id in
+		<foreach item="id" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</update>
+
+	<delete id="removeByMerchNo">
+		delete from agent where agent_number = #{value}
+	</delete>
+
+	<delete id="batchRemoveByMerchNo">
+		delete from agent where agent_number in
+		<foreach item="agentNumber" collection="array" open="(" separator="," close=")">
+			#{agentNumber}
+		</foreach>
+	</delete>
+</mapper>

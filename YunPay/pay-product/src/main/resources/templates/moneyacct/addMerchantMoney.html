@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.w3.org/1999/xhtml">
+<meta charset="utf-8">
+<head th:include="include :: header"></head>
+<link href="/css/layui.css" rel="stylesheet">
+<body class="gray-bg">
+    <div class="wrapper wrapper-content ">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-content">
+                        <form class="form-horizontal m-t" id="signupForm">
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">变动金额：</label>
+                            <div class="col-sm-8">
+                                <input id="changeMoney" name="changeMoney" class="form-control" type="number" required placeholder="负数则为减少金额">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">资金密码：</label>
+                            <div class="col-sm-8">
+                                <input id=fundPassword name="fundPassword" class="form-control"	type="password" maxlength="20" placeholder="请输入资金密码">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-8 col-sm-offset-3">
+                                <input type="hidden" th:value="${merchNo}" id="merchNo">
+                                <input type="button" class="btn btn-primary" onclick="save()" value="提交"/>
+                            </div>
+                        </div>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <div th:include="include::footer"></div>
+    <script type="text/javascript" src="/js/md5.min.js"></script>
+    <script type="text/javascript" src="/js/layui.js"></script>
+    <script th:inline="javascript"></script>
+    <script type="text/javascript">
+        var merchNo=$('#merchNo').val();
+        function save() {
+            var fundPassword = $("#fundPassword").val();
+            $.ajax({
+                type : "POST",
+                url : "/salt",
+                data:{username:merchNo},
+                success : function(r) {
+                    if (r.code == 1) {
+                        changeMoney(md5(fundPassword));
+                    } else {
+                        layer.msg(r.msg);
+                    }
+                }
+            })
+        }
+
+        function changeMoney(fundPassword){
+            var money=$('#changeMoney').val();
+            $.ajax({
+                cache : true,
+                type : "POST",
+                url : "/moneyacct/merchant/changeMoney/"+merchNo+"/"+money,
+                data:{fundPassword:fundPassword},
+                async : false,
+                error : function(request) {
+                    parent.layer.alert("Connection error");
+                },
+                success : function(data) {
+                    if (data.code == 1) {
+                        parent.layer.alert("修改成功");
+                    } else {
+                        parent.layer.alert(data.msg);
+                    }
+                }
+            });
+
+        }
+    </script>
+</body>
+</html>

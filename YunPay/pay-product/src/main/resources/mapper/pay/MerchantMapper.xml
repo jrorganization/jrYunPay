@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qh.pay.dao.MerchantMapper">
+	<resultMap type="com.qh.pay.domain.Merchant" id="rmMerchant">
+		<result property="coinRate" column="coin_rate" typeHandler="com.qh.common.config.JsonTypeHandler" />
+		<result property="coinSwitch" column="coin_switch" typeHandler="com.qh.common.config.JsonTypeHandler" />
+		<result property="custRate" column="cust_rate" typeHandler="com.qh.common.config.JsonTypeHandler" />
+		<result property="payCompany" column="payCompany" typeHandler="com.qh.common.config.JsonTypeHandler" />
+	</resultMap>
+	<sql id="baseCol">
+		`user_id`,`merch_no`,`public_key`,`crt_time`,`status`,`audit_status`,`pay_channel_type`,`parent_agent`,`merchants_name`,`contacts`,`contacts_phone`,`contacts_email`,`contacts_qq`,`logo_url`,`coin_switch`,`coin_rate`,`cust_rate`,`payCompany`
+		,acp_cny_min,acp_cny_max,acp_usdt_min,acp_usdt_max
+	</sql>
+
+	<select id="list" resultMap="rmMerchant">
+		select <include refid="baseCol"></include> from merchant
+        <where>  
+		  <if test="merchNo != null and merchNo != ''"> and merch_no = #{merchNo} </if>
+		  <if test="status != null and status != ''"> and status = #{status} </if>
+		  <if test="auditStatus != null and auditStatus != ''"> and audit_status = #{auditStatus} </if>
+		  <if test="payChannelType != null and payChannelType != ''"> and pay_channel_type = #{payChannelType} </if>
+		  <if test="pAgent != null and pAgent != ''"> and parent_agent = #{pAgent} </if>
+		  <if test="merchantsName != null and merchantsName != ''"> and merchants_name = #{merchantsName} </if>
+		</where>
+        <choose>
+            <when test="sort != null and sort.trim() != ''">
+                order by ${sort} ${order}
+            </when>
+			<otherwise>
+                order by user_id desc
+			</otherwise>
+        </choose>
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="count" resultType="int">
+		select count(1) from merchant
+		 <where>
+			 <if test="merchNo != null and merchNo != ''"> and merch_no = #{merchNo} </if>
+			 <if test="status != null and status != ''"> and status = #{status} </if>
+			 <if test="auditStatus != null and auditStatus != ''"> and audit_status = #{auditStatus} </if>
+			 <if test="payChannelType != null and payChannelType != ''"> and pay_channel_type = #{payChannelType} </if>
+			 <if test="pAgent != null and pAgent != ''"> and parent_agent = #{pAgent} </if>
+			 <if test="merchantsName != null and merchantsName != ''"> and merchants_name = #{merchantsName} </if>
+		 </where>
+	</select>
+	 
+	<insert id="save" parameterType="com.qh.pay.domain.Merchant" useGeneratedKeys="true" keyProperty="userId">
+		insert into merchant
+		(
+			`user_id`,
+			`merch_no`, 
+			`public_key`, 
+			`crt_time`, 
+			`status`, 
+			`audit_status`, 
+			`pay_channel_type`, 
+			`parent_agent`, 
+			`merchants_name`, 
+			`contacts`, 
+			`contacts_phone`, 
+			`contacts_email`, 
+			`contacts_qq`, 
+			`logo_url`, 
+			`coin_switch`, 
+			`coin_rate`,
+			acp_cny_min,acp_cny_max,
+			acp_usdt_min,acp_usdt_max,
+			`payCompany`
+		)
+		values
+		(
+			#{userId},
+			#{merchNo}, 
+			#{publicKey}, 
+			#{crtTime}, 
+			#{status}, 
+			#{auditStatus}, 
+			#{payChannelType}, 
+			#{parentAgent}, 
+			#{merchantsName}, 
+			#{contacts}, 
+			#{contactsPhone}, 
+			#{contactsEmail}, 
+			#{contactsQq}, 
+			#{logoUrl}, 
+			#{coinSwitch,typeHandler=com.qh.common.config.JsonTypeHandler},
+			#{coinRate,typeHandler=com.qh.common.config.JsonTypeHandler},
+			#{acpCnyMin},#{acpCnyMax},
+			#{acpUsdtMin},#{acpUsdtMax},
+			#{payCompany,typeHandler=com.qh.common.config.JsonTypeHandler}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.qh.pay.domain.Merchant">
+		update merchant 
+		<set>
+			<if test="publicKey != null">`public_key` = #{publicKey}, </if>
+			<if test="status != null">`status` = #{status}, </if>
+			<if test="auditStatus != null">`audit_status` = #{auditStatus}, </if>
+			<if test="payChannelType != null">`pay_channel_type` = #{payChannelType}, </if>
+			<if test="merchantsName != null">`merchants_name` = #{merchantsName}, </if>
+			<if test="contacts != null">`contacts` = #{contacts}, </if>
+			<if test="contactsPhone != null">`contacts_phone` = #{contactsPhone}, </if>
+			<if test="contactsEmail != null">`contacts_email` = #{contactsEmail}, </if>
+			<if test="contactsQq != null">`contacts_qq` = #{contactsQq}, </if>
+			<if test="logoUrl != null">`logo_url` = #{logoUrl}, </if>
+			<if test="acpCnyMin != null">`acp_cny_min` = #{acpCnyMin}, </if>
+			<if test="acpCnyMax != null">`acp_cny_max` = #{acpCnyMax}, </if>
+			<if test="acpUsdtMin != null">`acp_usdt_min` = #{acpUsdtMin}, </if>
+			<if test="acpUsdtMax != null">`acp_usdt_max` = #{acpUsdtMax}, </if>
+			<if test="coinSwitch != null">`coin_switch` = #{coinSwitch,typeHandler=com.qh.common.config.JsonTypeHandler}, </if>
+			<if test="coinRate != null">`coin_rate` = #{coinRate,typeHandler=com.qh.common.config.JsonTypeHandler},</if>
+			<if test="payCompany != null">`payCompany` = #{payCompany,typeHandler=com.qh.common.config.JsonTypeHandler},</if>
+		</set>
+		where user_id = #{userId}
+	</update>
+
+	<update id="updateCustRate" parameterType="com.qh.pay.domain.Merchant">
+		update merchant
+		<set>
+			<if test="custRate != null">`cust_rate` = #{custRate,typeHandler=com.qh.common.config.JsonTypeHandler}</if>
+		</set>
+		where user_id = #{userId}
+	</update>
+
+	<delete id="remove">
+		delete from merchant where user_id = #{value}
+	</delete>
+	
+	<delete id="batchRemove">
+		delete from merchant where user_id in 
+		<foreach item="userId" collection="array" open="(" separator="," close=")">
+			#{userId}
+		</foreach>
+	</delete>
+
+	<update id="batchqiyong">
+		update merchant set status = 1
+		where user_id in
+		<foreach item="id" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</update>
+	<update id="batchjinyong">
+		update merchant set status = 0
+		where user_id in
+		<foreach item="id" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</update>
+
+	<update id="batchAudit">
+		update merchant set audit_status = #{auditStatus}
+		<if test="auditStatus == 1">
+			,status = 1
+		</if>
+		where user_id in
+		<foreach item="id" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</update>
+	<delete id="removeByMerchNo">
+		delete from merchant where merch_no = #{value}
+	</delete>
+
+	<delete id="batchRemoveByMerchNo">
+		delete from merchant where merch_no in
+		<foreach item="merchNo" collection="array" open="(" separator="," close=")">
+			#{merchNo}
+		</foreach>
+	</delete>
+</mapper>

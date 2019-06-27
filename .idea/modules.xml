@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/YunPay/pay-product/yunpay.iml" filepath="$PROJECT_DIR$/YunPay/pay-product/yunpay.iml" />
+      <module fileurl="file://$PROJECT_DIR$/YunPay/yunpay.iml" filepath="$PROJECT_DIR$/YunPay/yunpay.iml" />
+    </modules>
+  </component>
+</project>

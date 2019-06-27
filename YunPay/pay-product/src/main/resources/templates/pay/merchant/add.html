@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.w3.org/1999/xhtml">
+<meta charset="utf-8">
+<head th:include="include :: header"></head>
+<link href="/css/layui.css" rel="stylesheet">
+<body class="gray-bg">
+<div class="wrapper wrapper-content ">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="ibox float-e-margins">
+                <div class="ibox-content">
+                    <form  class="form-horizontal m-t" id="signupForm">
+                        <div id="submitContent">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">一级代理商：</label>
+                            <div class="col-sm-4">
+                                <select id="oneAgent" class="form-control">
+                                    <option th:each="agent:${agents}" th:value="${agent.key}" th:text="${agent.value}"></option>
+                                </select>
+                            </div>
+                            <label class="col-sm-2 control-label">二级级代理商：</label>
+                            <div class="col-sm-4">
+                                <select id="subAgent" class="form-control">
+                                </select>
+                            </div>
+                            <input id="parentAgent" type="hidden" name="parentAgent">
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">商户名称：</label>
+                            <div class="col-sm-4">
+                                <input id="merchantsName" name="merchantsName" class="form-control" type="text" required>
+                            </div>
+                            <label class="col-sm-2 control-label">通道分类：</label>
+                            <div class="col-sm-4">
+                                <select id="payChannelType" name="payChannelType" class="form-control">
+                                    <option th:each="pct:${payChannelTypes}" th:value="${pct.key}" th:text="${pct.value}"></option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">联系人：</label>
+                            <div class="col-sm-4">
+                                <input id="contacts" name="contacts" class="form-control" maxlength="20" type="text">
+                            </div>
+                            <label class="col-sm-2 control-label">联系人电话：</label>
+                            <div class="col-sm-4">
+                                <input id="contactsPhone" name="contactsPhone" class="form-control" maxlength="12" type="text">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">联系人邮箱：</label>
+                            <div class="col-sm-4">
+                                <input id="contactsEmail" name="contactsEmail" class="form-control" maxlength="50" type="email">
+                            </div>
+                            <label class="col-sm-2 control-label">联系人QQ：</label>
+                            <div class="col-sm-4">
+                                <input id="contactsQq" name="contactsQq" class="form-control" maxlength="15" type="text">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2  control-label">
+                                <button type="button" class="layui-btn" id="logo_url_bind" style="width: 90%;">
+                                    <i class="fa fa-cloud"></i>商户logo
+                                </button>
+                            </label>
+                            <label class="col-sm-4 control-label" style="text-align: left">
+                                <img id="logo_url_img"  height="50"/>
+                                <input type="hidden" name="logoUrl" id="logo_url_hi"/>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">提现CNY最小值：</label>
+                            <div class="col-sm-4">
+                                <input id="acpCnyMin" name="acpCnyMin" class="form-control" min="0" max="999999"  onkeyup="NumberCheck(this)" type="number" required>
+                            </div>
+                            <label class="col-sm-2 control-label">提现CNY最大值：</label>
+                            <div class="col-sm-4">
+                                <input id="acpCnyMax" name="acpCnyMax" class="form-control" min="0" max="9999999999"  onkeyup="NumberCheck(this)" type="number" required>
+                            </div>
+                        </div>
+                        <div class="form-group" th:each="payCoin:${payCoins}">
+                            <label class="col-sm-2 control-label" th:text="${payCoin.value + ' 费率：'}"></label>
+                            <div class="col-sm-2">
+                                <input th:id ="coinRate_+${payCoin.key}" class="form-control" min="0" maxlength="4" type="number" required value="2.3">
+                            </div>
+                            <div class="col-sm-3">
+                                <label th:each="unit:${rateUnits}" class="radio-inline">
+                                    <input th:name="coinRateUnit_+${payCoin.key}"  type="radio" th:value="${unit.key}" th:checked="${unit.key==1}"
+                                           th:text="${unit.value}">
+                                </label>
+                            </div>
+                            <div class="col-sm-2">
+                                <label th:each="oo:${onOff}" class="radio-inline">
+                                    <input th:name="coinSwitch_+${payCoin.key}"  type="radio" th:value="${oo.key}" th:checked="${oo.key==0}"
+                                           th:text="${oo.value}">
+                                </label>
+                            </div>
+                            <div class="col-sm-2">
+                                <select th:id="payCompanys_+${payCoin.key}" th:name="payCompanys_+${payCoin.key}" class="form-control">
+                                    <option th:each="payCompany:${payCompanys}" th:value="${payCompany.key}" th:text="${payCompany.value}" ></option>
+                                </select>
+                            </div>
+                        </div>
+                        <input type="hidden" id="coinRateStr" name = "coinRateStr">
+                        <input type="hidden" id="coinSwitchStr" name = "coinSwitchStr">
+                        <input type="hidden" id="payCompanysStr" name = "payCompanysStr">
+                        <div class="form-group">
+                            <div class="col-sm-8 col-sm-offset-3">
+                                <button type="submit" class="btn btn-primary">提交</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id = "commitWait" style="display: none">
+                        <div class="sk-spinner sk-spinner-wave">
+                            <div class="sk-rect1"></div>
+                            <div class="sk-rect2"></div>
+                            <div class="sk-rect3"></div>
+                            <div class="sk-rect4"></div>
+                            <div class="sk-rect5"></div>
+                        </div>
+                        <h2>正在提交,请不要刷新页面,或关闭浏览器!</h2>
+                    </div>
+                    <div id = "commitComplete" style="display: none">
+                        <button class="btn btn-outline btn-primary dim btn-large-dim" type="button">
+                            <i class="fa fa-check"></i>
+                        </button>
+                        <h2>提交成功!可以<a href="javascript:location.reload()" style="color:green;"> 刷新 </a>当前页面继续添加!</h2>
+                    </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div th:include="include::footer"></div>
+<script type="text/javascript" src="/js/layui.js"></script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    payCoins = [[${payCoins}]];
+    /*]]>*/
+</script>
+<script type="text/javascript">
+    $().ready(function() {
+        validateRule();
+        loadSubAgent();
+        $("#oneAgent").change(function(){
+            loadSubAgent();
+        });
+    });
+    layui.use(['form','upload'], function () {
+        var upload = layui.upload;
+        //执行实例
+        var uploadInst = upload.render({
+            elem: '#logo_url_bind', //绑定元素
+            url: '/common/sysFile/upload', //上传接口
+            type : 'images',
+            size: 1000,
+            accept: 'images',
+            done: function (r) {
+                console.log(r)
+                $("#logo_url_img").attr("src",r.fileName);
+                $("#logo_url_hi").val(r.fileName);
+            },
+            error: function (r) {
+                layer.msg(r.msg);
+            }
+        });
+    });
+    $.validator.setDefaults({
+        submitHandler : function() {
+            save();
+        }
+    });
+    function save() {
+        $("#parentAgent").val($("#subAgent").val() || $("#oneAgent").val());
+        var coinRate = {};
+        var coinSwitch = {};
+        var payCompanys = {};
+        for(payCoin in payCoins){
+            coinRate[payCoin] = {};
+            coinRate[payCoin].rate =  $("#coinRate_" + payCoin).val() || 0 +"";
+            coinRate[payCoin].unit =  $("input[name=coinRateUnit_" + payCoin + "]:checked").val() || 1;
+            coinSwitch[payCoin] = $("input[name=coinSwitch_" + payCoin + "]:checked").val() || 0;
+            payCompanys[payCoin] = $("#payCompanys_" + payCoin).val();
+        }
+        $("#coinRateStr").val(JSON.stringify(coinRate));
+        $("#coinSwitchStr").val(JSON.stringify(coinSwitch));
+        $("#payCompanysStr").val(JSON.stringify(payCompanys));
+        $("#commitWait").show();
+        $("#submitContent").hide();
+        $.ajax({
+            cache : true,
+            type : "POST",
+            url : "/pay/merchant/save",
+            data : $('#signupForm').serialize(),// 你的formid
+            async : false,
+            error : function(request) {
+                parent.layer.alert("Connection error");
+            },
+            success : function(data) {
+                if (data.code == 1) {
+                    $("#submitContent").hide();
+                    $("#commitWait").hide();
+                    $("#commitComplete").show();
+                } else {
+                    $("#commitWait").hide();
+                    $("#submitContent").show();
+                    parent.layer.alert(data.msg);
+                }
+            }
+        });
+
+    }
+    function validateRule() {
+        var icon = "<i class='fa fa-times-circle'></i> ";
+        $("#signupForm").validate({
+            rules : {
+                merchantsName : {
+                    required : true
+                }
+            },
+            messages : {
+                merchantsName : {
+                    required : icon + "请输入商户名"
+                }
+            }
+        })
+    }
+    function loadSubAgent(parentAgent){
+        if(!parentAgent){
+            parentAgent = $("#oneAgent").val();
+        }
+        var $subAgent = $("#subAgent");
+        if(!parentAgent){
+            $subAgent.html("<option value = ''>--请选择--</option>");
+        }
+        $.ajax({
+            type : "POST",
+            url : "/pay/agent/getAgentByParent",
+            data : {parentAgent:parentAgent},// 你的formid
+            async : false,
+            success : function(data) {
+                if (data.code == 1) {
+                    if(data.data){
+                        $subAgent.html("<option value = ''>--请选择--</option>");
+                        for(var key in data.data){
+                            $subAgent.append("<option value = '" + key +"'>" + data.data[key]+"</option>");
+                        }
+                    }else{
+                        $subAgent.html("<option value = ''>--请选择--</option>");
+                    }
+                } else {
+                    layer.alert(data.msg);
+                }
+
+            }
+        });
+    }
+    function NumberCheck(t){
+        var num = t.value;
+        var re=/^\d*$/;
+        if(!re.test(num)){
+            isNaN(parseInt(num))?t.value=0:t.value=parseInt(num);
+        }
+    }
+</script>
+</body>
+</html>

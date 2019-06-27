@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.w3.org/1999/xhtml">
+<meta charset="utf-8">
+<head th:include="include :: header"></head>
+<link href="/css/layui.css" rel="stylesheet">
+<body class="gray-bg">
+<div class="wrapper wrapper-content ">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="ibox float-e-margins">
+                <div class="ibox-content">
+                    <form  class="form-horizontal m-t" id="signupForm">
+                        <input type="hidden" th:value="${merchant.userId}" name = "userId">
+                        <input type="hidden" th:value="${merchant.merchNo}" name = "merchNo">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">代理商：</label>
+                            <div class="col-sm-4">
+                                <span class="form-control" th:text="${oneAgent}"></span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">商户名称：</label>
+                            <div class="col-sm-4">
+                                <input id="merchantsName" name="merchantsName" class="form-control" th:value="${merchant.merchantsName}" type="text" required>
+                            </div>
+                            <label class="col-sm-2 control-label">通道分类：</label>
+                            <div class="col-sm-4">
+                                <select id="payChannelType" name="payChannelType" class="form-control">
+                                    <option th:each="pct:${payChannelTypes}" th:value="${pct.key}" th:text="${pct.value}" th:selected="${merchant.payChannelType==pct.key}"></option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">联系人：</label>
+                            <div class="col-sm-4">
+                                <input id="contacts" name="contacts" class="form-control" maxlength="20" th:value="${merchant.contacts}" type="text">
+                            </div>
+                            <label class="col-sm-2 control-label">联系人电话：</label>
+                            <div class="col-sm-4">
+                                <input id="contactsPhone" name="contactsPhone" class="form-control" maxlength="20" th:value="${merchant.contactsPhone}" type="text">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">联系人邮箱：</label>
+                            <div class="col-sm-4">
+                                <input id="contactsEmail" name="contactsEmail" class="form-control" maxlength="50" th:value="${merchant.contactsEmail}" type="text">
+                            </div>
+                            <label class="col-sm-2 control-label">联系人QQ：</label>
+                            <div class="col-sm-4">
+                                <input id="contactsQq" name="contactsQq" class="form-control" maxlength="15" th:value="${merchant.contactsQq}" type="text">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2  control-label">
+                                <button type="button" class="layui-btn" id="logo_url_bind" style="width: 90%;">
+                                    <i class="fa fa-cloud"></i>商户logo
+                                </button>
+                            </label>
+                            <label class="col-sm-4 control-label" style="text-align: left">
+                                <img id="logo_url_img"  height="50" th:src="${merchant.logoUrl}"/>
+                                <input type="hidden" name="logoUrl" id="logo_url_hi" th:value="${merchant.logoUrl}"/>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">提现CNY最小值：</label>
+                            <div class="col-sm-4">
+                                <input id="acpCnyMin" name="acpCnyMin" class="form-control" th:value="${merchant.acpCnyMin}" min="0" max="999999"  onkeyup="NumberCheck(this)" type="number" required>
+                            </div>
+                            <label class="col-sm-2 control-label">提现CNY最大值：</label>
+                            <div class="col-sm-4">
+                                <input id="acpCnyMax" name="acpCnyMax" class="form-control" th:value="${merchant.acpCnyMax}" min="0" max="9999999999"  onkeyup="NumberCheck(this)" type="number" required>
+                            </div>
+                        </div>
+                        <div class="form-group" th:each="payCoin:${payCoins}"><label class="col-sm-2 control-label" th:text="${payCoin.value + '费率：'}"></label>
+                            <div class="col-sm-2">
+                                <input th:id ="${'coinRate' + payCoin.key}" class="form-control"  min='0' maxlength="4" type="number" required>
+                            </div>
+                            <div class="col-sm-4">
+                                <!--<label class="control-label" th:if="${payCoin.key}!=acp">%/笔</label>
+                                <label class="control-label" th:if="${payCoin.key}==acp">元/笔</label>-->
+                                <label th:each="unit:${rateUnits}" class="radio-inline">
+                                    <input th:name="coinRateUnit_+${payCoin.key}" type="radio" th:value="${unit.key}"
+                                           th:text="${unit.value}">
+                                </label>
+                                <label>(父级费率</label>
+                                <label th:id ="${'parentAgentRate' + payCoin.key}">0</label>
+                                <label>%/笔)</label>
+                            </div>
+                            <div class="col-sm-6">
+                                <label th:each="oo:${onOff}" class="radio-inline ">
+                                    <input th:name="coinSwitch_+${payCoin.key}"  type="radio" th:value="${oo.key}"
+                                           th:text="${oo.value}">
+                                </label>
+                            </div>
+                            <div class="col-sm-2">
+                                <select th:id="payCompanys_+${payCoin.key}" th:name="payCompanys_+${payCoin.key}" class="form-control">
+                                    <option th:each="payCompany:${payCompanys}" th:value="${payCompany.key}" th:text="${payCompany.value}" ></option>
+                                </select>
+                            </div>
+                        </div>
+                        <input type="hidden" id="coinRateStr" name = "coinRateStr">
+                        <input type="hidden" id="coinSwitchStr" name = "coinSwitchStr">
+                        <input type="hidden" id="payCompanysStr" name = "payCompanysStr">
+                        <div class="form-group">
+                            <div class="col-sm-8 col-sm-offset-3">
+                                <button type="submit" class="btn btn-primary">提交</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div th:include="include::footer"></div>
+<script type="text/javascript" src="/js/layui.js"></script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    payCoins = [[${payCoins}]];
+    merCompany = [[${merCompany}]];
+    coinRate = [[${merchant.coinRate}]];
+    coinSwitch = [[${merchant.coinSwitch}]];
+    parentCoinRate = [[${parentCoinRate}]];
+    payCompany=[[${merchant.payCompany}]];
+    /*]]>*/
+</script>
+<script type="text/javascript">
+    $().ready(function() {
+        validateRule();
+        lo();
+    });
+    layui.use(['form','upload'], function () {
+        var upload = layui.upload;
+        //执行实例
+        var uploadInst = upload.render({
+            elem: '#logo_url_bind', //绑定元素
+            url: '/common/sysFile/upload', //上传接口
+            type : 'images',
+            size: 1000,
+            accept: 'images',
+            done: function (r) {
+                console.log(r)
+                $("#logo_url_img").attr("src",r.fileName);
+                $("#logo_url_hi").val(r.fileName);
+            },
+            error: function (r) {
+                layer.msg(r.msg);
+            }
+        });
+    });
+    $.validator.setDefaults({
+        submitHandler : function() {
+            save();
+        }
+    });
+    function save() {
+        var coinRate = {};
+        var coinSwitch = {};
+        var payCompanys = {};
+        for(payCoin in payCoins){
+            coinRate[payCoin] = {};
+            if(parseFloat($("#coinRate").val()) - parseFloat($('#parentAgentRate').text()) < 0){
+                layer.msg("商户费率必须大于代理商的费率");
+                return ;
+            }
+            coinRate[payCoin].rate = "" +  $("#coinRate" + payCoin).val();
+            coinRate[payCoin].unit =  $("input[name=coinRateUnit_" + payCoin + "]:checked").val()+"" || "1";
+            /*coinRate[payCoin].unit =  "1";*/
+            coinSwitch[payCoin] = $("input[name=coinSwitch_" + payCoin + "]:checked").val()+"" || "0";
+            payCompanys[payCoin] = $("#payCompanys_" + payCoin).val();
+        }
+        $("#coinRateStr").val(JSON.stringify(coinRate));
+        $("#coinSwitchStr").val(JSON.stringify(coinSwitch));
+        $("#payCompanysStr").val(JSON.stringify(payCompanys));
+        $.ajax({
+            cache : true,
+            type : "POST",
+            url : "/pay/merchant/update",
+            data : $('#signupForm').serialize(),// 你的formid
+            async : false,
+            error : function(request) {
+                parent.layer.alert("Connection error");
+            },
+            success : function(data) {
+                if (data.code == 1) {
+                    parent.layer.msg("操作成功");
+                    parent.reLoad();
+                    var index = parent.layer.getFrameIndex(window.name); // 获取窗口索引
+                    parent.layer.close(index);
+                } else {
+                    parent.layer.alert(data.msg)
+                }
+            }
+        });
+
+    }
+    function validateRule() {
+        var icon = "<i class='fa fa-times-circle'></i> ";
+        $("#signupForm").validate({
+            rules : {
+                merchantsName : {
+                    required : true
+                }
+            },
+            messages : {
+                merchantsName : {
+                    required : icon + "请输入商户名"
+                }
+            }
+        })
+    }
+    function NumberCheck(t){
+        var num = t.value;
+        var re=/^\d*$/;
+        if(!re.test(num)){
+            isNaN(parseInt(num))?t.value=0:t.value=parseInt(num);
+        }
+    }
+    function lo() {
+        for (payCoin1 in payCoins){
+            var unitVal = 1;
+            if (coinRate && coinRate[payCoin1]) {
+                if(coinRate[payCoin1].rate!=null){
+                    $("#coinRate" + payCoin1).val(coinRate[payCoin1].rate);
+                }else{
+                    $("#coinRate" + payCoin1).val(0);
+                }
+                unitVal = coinRate[payCoin1].unit || 1;
+                $("input[name=coinRateUnit_" + payCoin1 + "]").each(function(){
+                    if($(this).val() == unitVal){
+                        $(this).prop("checked","checked");
+                    }
+                })
+                if (parentCoinRate) {
+                    $('#parentAgentRate' + payCoin1).text(parentCoinRate[payCoin1].rate);
+                }
+            }
+            if (coinSwitch) {
+                unitVal = coinSwitch[payCoin1] || 0;
+                $("input[name=coinSwitch_" + payCoin1 + "]").each(function () {
+                    if ($(this).val() == unitVal) {
+                        $(this).prop("checked", "checked");
+                    }
+                })
+            }
+
+            if (merCompany && merCompany[payCoin1]) {
+                if(merCompany[payCoin1]!=null){
+                    $("#payCompanys_" + payCoin1).each(function () {
+                        $(this).val(merCompany[payCoin1]);
+                        if ($(this).val() == merCompany[payCoin1].toString) {
+                            $(this).prop("selected", "selected");
+                        }
+                    })
+                }
+            }
+        }
+    }
+</script>
+</body>
+</html>

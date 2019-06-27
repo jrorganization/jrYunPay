@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.w3.org/1999/xhtml">
+<meta charset="utf-8">
+<head th:include="include :: header"></head>
+<body class="gray-bg">
+<div class="wrapper wrapper-content ">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="ibox float-e-margins">
+                <div class="ibox-content">
+                    <form class="form-horizontal m-t" id="signupForm">
+                        <div id = "submitContent">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">父级代理商：</label>
+                            <div class="col-sm-4">
+                                <input id="parentAgent" name="parentAgent" type="text" class="form-control"
+                                       placeholder="请输入父级代理商">
+                                <div class="input-group-btn pull-right">
+                                    <ul class="dropdown-menu dropdown-menu-left" role="menu"></ul>
+                                </div>
+                            </div>
+                            <div class="col-sm-4">
+                                <button type="button" class="btn btn-warning" style="text-align: left;"><i class="fa fa-warning"></i>未选择，默认为一级代理</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">代理商名称：</label>
+                            <div class="col-sm-4">
+                                <input id="agentName" name="agentName" class="form-control" type="text" required>
+                            </div>
+                            <label class="col-sm-2 control-label">通道分类：</label>
+                            <div class="col-sm-4">
+                                <select id="payChannelType" name="payChannelType" class="form-control">
+                                    <option th:each="pct:${payChannelTypes}" th:value="${pct.key}" th:text="${pct.value}"></option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">联系人：</label>
+                            <div class="col-sm-4">
+                                <input id="contacts" name="contacts" class="form-control" maxlength="20" type="text">
+                            </div>
+                            <label class="col-sm-2 control-label">联系人电话：</label>
+                            <div class="col-sm-4">
+                                <input id="contactsPhone" name="contactsPhone" maxlength="20" class="form-control" type="text">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">联系人邮箱：</label>
+                            <div class="col-sm-4">
+                                <input id="contactsEmail" name="contactsEmail" maxlength="60" class="form-control" type="email">
+                            </div>
+                            <label class="col-sm-2 control-label">联系人QQ：</label>
+                            <div class="col-sm-4">
+                                <input id="contactsQq" name="contactsQq" class="form-control" maxlength="15" type="number">
+                            </div>
+                        </div>
+
+                        <div class="form-group" th:each="payCoin:${payCoins}">
+                            <label class="col-sm-2 control-label" th:text="${payCoin.value + '费率：'}"></label>
+                            <div class="col-sm-2">
+                                <input th:id ="${'coinRate' + payCoin.key}" class="form-control"  min='0' maxlength="4" type="number" required value="0.1">
+                            </div>
+                            <div class="col-sm-4">
+                                <label class="control-label">%/笔</label>
+                                <label>(父级费率</label>
+                                <label th:id ="${'parentAgentRate' + payCoin.key}">0</label>
+                                <label>%/笔)</label>
+                            </div>
+                        </div>
+                        <input type="hidden" id="coinRateStr" name = "coinRateStr">
+                        <div class="form-group">
+                            <div class="col-sm-8 col-sm-offset-3">
+                                <button type="submit" class="btn btn-primary">提交</button>
+                            </div>
+                        </div>
+                        </div>
+                        <div id = "commitWait" style="display: none">
+                            <div class="sk-spinner sk-spinner-wave">
+                                <div class="sk-rect1"></div>
+                                <div class="sk-rect2"></div>
+                                <div class="sk-rect3"></div>
+                                <div class="sk-rect4"></div>
+                                <div class="sk-rect5"></div>
+                            </div>
+                            <h2>正在提交,请不要刷新页面,或关闭浏览器!</h2>
+                        </div>
+                        <div id = "commitComplete" style="display: none">
+                            <button class="btn btn-outline btn-primary dim btn-large-dim" type="button">
+                                <i class="fa fa-check"></i>
+                            </button>
+                            <h2>提交成功!可以<a href="javascript:location.reload()" style="color:green;"> 刷新 </a>当前页面继续添加!</h2>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div th:include="include::footer"></div>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    payCoins = [[${payCoins}]];
+    /*]]>*/
+</script>
+<script type="text/javascript" src="/js/plugins/suggest/bootstrap-suggest.js"></script>
+<script type="text/javascript">
+    $().ready(function() {
+        validateRule();
+    });
+    $.validator.setDefaults({
+        submitHandler : function() {
+            save();
+        }
+    });
+    function save() {
+        var coinRate = {};
+        for(payCoin in payCoins){
+            coinRate[payCoin] = {};
+            if(parseFloat($("#coinRate" + payCoin).val()) - parseFloat($('#parentAgentRate' + payCoin).text()) < 0){
+                layer.msg("必须大于父级代理商的费率");
+                return ;
+            }
+            coinRate[payCoin].rate = "" +  $("#coinRate" + payCoin).val();
+            coinRate[payCoin].unit =  "1";
+        }
+        $("#coinRateStr").val(JSON.stringify(coinRate));
+        $("#commitWait").show();
+        $("#submitContent").hide();
+        $.ajax({
+            cache : true,
+            type : "POST",
+            url : "/pay/agent/save",
+            data : $('#signupForm').serialize(),// 你的formid
+            async : false,
+            error : function(request) {
+                parent.layer.alert("Connection error");
+            },
+            success : function(data) {
+                if (data.code == 1) {
+                    $("#submitContent").hide();
+                    $("#commitWait").hide();
+                    $("#commitComplete").show();
+                } else {
+                    $("#commitWait").hide();
+                    $("#submitContent").show();
+                    parent.layer.alert(data.msg);
+                }
+            }
+        });
+
+    }
+    function validateRule() {
+        var icon = "<i class='fa fa-times-circle'></i> ";
+        $("#signupForm").validate({
+            rules : {
+                agentName : {
+                    required : true
+                },
+            },
+            messages : {
+                agentName : {
+                    required : icon + "请输入代理商名称"
+                }
+            }
+        });
+    }
+
+
+
+    var dataList = {value : []};
+
+    //请求json格式的数据 {value: [key:value,key2:value2]};
+    function init(dataList) {
+        $.ajax({
+            type : 'get',
+            async : false,
+            url : '/pay/agent/agentListInfo',
+            success : function(result) {
+                var data = result.data;
+                for (var i = 0; i < data.length; i++) {
+                    dataList.value.push({
+                        agentNumber: data[i].agentNumber,
+                        agentName:data[i].agentName,
+                        levelName:data[i].levelName
+                    });
+                }
+            }
+        });
+        return dataList;
+    }
+
+    // 插件绑定事件
+    $("#parentAgent").bsSuggest({
+        indexId : 3, // data.value 的第几个数据，作为input输入框的显示的内容
+        // indexKey: 2, //data.value 的第几个数据，作为input输入框的内容
+        data : init(dataList),
+        listAlign: 'left',
+        listStyle: {
+            'padding-top': 0, 'max-height': '375px', 'max-width': '250px',
+            'overflow': 'auto', 'width': '250px',
+            'transition': '0.3s', '-webkit-transition': '0.3s', '-moz-transition': '0.3s', '-o-transition': '0.3s'
+        }
+    }).on('onDataRequestSuccess', function(e, result) {
+        console.log('从 json参数中获取，不会触发 onDataRequestSuccess 事件', result);
+    }).on('onSetSelectValue', function(e, keyword, data) {
+        var agentNumber = data.agentNumber;
+        $.ajax({
+            type : 'post',
+            async : false,
+            url : '/pay/agent/parentAgentRate',
+            data : {"parentAgentNumber" : agentNumber},
+            success : function(result) {
+                console.log(result);
+                var parentCoinRate = result.data;
+                for(payCoin in payCoins){
+                    if(parentCoinRate){
+                        $('#parentAgentRate' + payCoin).text(parentCoinRate[payCoin].rate);
+                    }
+                }
+            }
+        });
+    }).on('onUnsetSelectValue', function() {
+    });
+</script>
+</body>
+</html>

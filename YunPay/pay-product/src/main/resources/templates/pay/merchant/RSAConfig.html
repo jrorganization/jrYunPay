@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:shiro="http://www.w3.org/1999/xhtml" xmlns:th="http://www.w3.org/1999/xhtml">
+<title>秘钥设置(默认RSA,若需用Md5,则使用RSA私钥)</title>
+<head th:include="include :: header"></head>
+<link href="/css/layui.css" rel="stylesheet">
+
+<body class="gray-bg">
+<div class="wrapper">
+    <div class="col-sm-12">
+        <div>
+            <text type="hidden" id="merchNo" value="${merchant.merchNo}"></text>
+        </div>
+        <div>
+            <label>公钥配置</label>
+            <textarea id="publicKey" style="height:150px;width:100% " required="required"></textarea>
+        </div>
+        <div id="privateKeyDiv" >
+            <label >私钥配置</label>
+            <textarea id="privateKey" style="height:150px;width:100% " readonly="readonly"/>
+        </div>
+        <div>
+            <button shiro:hasPermission="pay:merchant:updatePKey" class="btn btn-primary" id="createPrivateKey">更新秘钥</button>
+            <button class="btn btn-primary" id="submit">确定</button>
+        </div>
+
+
+    </div>
+</div>
+<div th:include="include::footer"></div>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var merchant = [[${merchant}]];
+    /*]]>*/
+</script>
+<script type="text/javascript" src="/js/plugins/layui/layui.js"></script>
+<script type="text/javascript">
+    $().ready(function () {
+        $("#privateKeyDiv").hide();
+        $("#publicKey").val( merchant.publicKey)
+        $("#createPrivateKey").click(createPrivateKey);
+        $("#submit").click(update);
+    });
+
+    function createPrivateKey() {
+        $.ajax({
+            cache: true,
+            type: "POST",
+            url: "/pay/merchant/createPrivateKey",
+            async: false,
+            error: function (request) {
+                parent.layer.alert("连接超时!");
+            },
+            success: function (data) {
+                $("#publicKey").val(data[0]);
+                $("#privateKey").val(data[1]);
+                $("#privateKeyDiv").hide();
+            }
+
+        });
+    }
+
+    function update() {
+        $.ajax({
+            cache: true,
+            type: "POST",
+            url: "/pay/merchant/updatePKey",
+            data: "merchNo=" +   merchant.merchNo + "&publicKey=" +   $("#publicKey").val()+"&privateKey=" +   $("#privateKey").val(),
+            async: false,
+            error: function (request) {
+                parent.layer.alert("连接超时!");
+            },
+            success: function (data) {
+                if (data.code == 1) {
+                    parent.layer.msg("操作成功");
+                    parent.reLoad();
+                    var index = parent.layer.getFrameIndex(window.name); // 获取窗口索引
+                    parent.layer.close(index);
+                } else {
+                    parent.layer.alert(data.msg)
+                }
+            }
+
+        });
+
+    }
+</script>
+</body>
+</html>

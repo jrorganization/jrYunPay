@@ -1,0 +1,81 @@
+<head th:fragment="header" xmlns:th="http://www.springframework.org/schema/data/jaxb"
+      xmlns:th="http://www.w3.org/1999/xhtml" xmlns:th="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.w3.org/1999/xhtml">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YunPay</title>
+<meta name="keywords" content="">
+<meta name="description" content="">
+<link rel="shortcut icon" href="favicon.ico">
+<link href="css/bootstrap.min.css?v=3.3.6"
+	th:href="@{/css/bootstrap.min.css?v=3.3.6}" rel="stylesheet">
+<link href="/css/font-awesome.css?v=4.4.0"
+	th:href="@{/css/font-awesome.css?v=4.4.0}" rel="stylesheet">
+<link href="/css/plugins/bootstrap-table/bootstrap-table.min.css"
+	th:href="@{/css/plugins/bootstrap-table/bootstrap-table.min.css}"
+	rel="stylesheet">
+<link href="/css/plugins/jsTree/style.min.css" rel="stylesheet">
+<link href="/css/plugins/jqTreeGrid/jquery.treegrid.css"
+	rel="stylesheet">
+<!--summernote css -->
+<link href="/css/plugins/summernote/summernote-0.8.8.css"
+	rel="stylesheet">
+<link href="css/animate.css" th:href="@{/css/animate.css}"
+	rel="stylesheet">
+<link href="/css/plugins/chosen/chosen.css" rel="stylesheet">
+<link href="/css/style.css?v=4.1.0" th:href="@{/css/style.css?v=4.1.0}"
+	rel="stylesheet">
+</head>
+<div th:fragment="common-footer">
+	<script lang="text/javascript">
+        function loadCss(url){
+            var head = document.getElementsByTagName('head')[0],
+                linkTag = document.createElement('link');
+            linkTag.href = url;
+            linkTag.setAttribute('rel','stylesheet');
+            linkTag.setAttribute('media','all');
+            linkTag.setAttribute('type','text/css');
+            head.appendChild(linkTag);
+        }
+	</script>
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css" onerror="loadCss('/css/bootstrap.min.css?v=3.3.6')"
+		  rel="stylesheet">
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css" onerror="loadCss('/css/font-awesome.min.css?v=4.4.0')"
+		  rel="stylesheet">
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css" onerror="loadCss('/css/animate.css')"
+		  rel="stylesheet">
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.13.0/jquery.validate.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.13.0/localization/messages_zh.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/layer/2.1/layer.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.10.0/js/md5.min.js"></script>
+	<script>window.jQuery || document.write('<script src="/js/jquery.min.js?v=2.1.4">\x3C/script>' +
+        '<script src="/js/bootstrap.min.js?v=3.3.6">\x3C/script>' +
+        '<script src="/js/plugins/validate/jquery.validate.min.js">\x3C/script>' +
+        '<script src="/js/plugins/validate/messages_zh.min.js">\x3C/script>' +
+        '<script src="/js/plugins/layer/layer.min.js">\x3C/script>' +
+        '<script src="/js/md5.min.js">\x3C/script>')
+	</script>
+</div>
+<div th:fragment="footer">
+	<script src="/js/jquery.min.js?v=2.1.4"></script>
+	<script src="/js/bootstrap.min.js?v=3.3.6"></script>
+	<script src="/js/plugins/bootstrap-table/bootstrap-table.min.js"></script>
+	<script src="/js/plugins/bootstrap-table/bootstrap-table-mobile.min.js"></script>
+	<script
+		src="/js/plugins/bootstrap-table/locale/bootstrap-table-zh-CN.min.js"></script>
+	<script src="/js/plugins/validate/jquery.validate.min.js"></script>
+	<script src="/js/plugins/validate/messages_zh.min.js"></script>
+	<script src="/js/plugins/jsTree/jstree.min.js"></script>
+	<script src="/js/plugins/jqTreeGrid/jquery.treegrid.min.js"></script>
+	<script src="/js/plugins/jqTreeGrid/jquery.treegrid.extension.js"></script>
+	<script src="/js/plugins/jqTreeGrid/jquery.treegrid.bootstrap3.js"></script>
+	<script src="/js/plugins/chosen/chosen.jquery.js"></script>
+	<script src="/js/plugins/layer/layer.js"></script>
+	<script src="/js/content.js?v=1.0.0"></script>
+	<!--summernote-->
+	<script src="/js/plugins/summernote/summernote.js"></script>
+	<script src="/js/plugins/summernote/summernote-zh-CN.min.js"></script>
+</div>

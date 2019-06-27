@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.w3.org/1999/xhtml" xmlns:shiro="http://www.w3.org/1999/xhtml">
+<meta charset="utf-8">
+<head th:include="include :: header"></head>
+<link rel="stylesheet" href="/css/plugins/switch/bootstrap-switch.min.css"/>
+<style>
+.onoffswitch-inner:before {
+    content: "开启";
+    background-color: #1ab394;
+    color: #FFFFFF;
+    text-align: left;
+}
+
+.onoffswitch-inner:after {
+    content: "禁用";
+    background-color: #FFFFFF;
+    color: #999999;
+    text-align: right;
+}
+</style>
+<body class="gray-bg">
+	<div class="wrapper wrapper-content ">
+		<div class="col-sm-12">
+			<div class="ibox">
+				<div class="ibox-body">
+					<div class="fixed-table-toolbar">
+						<div class="columns pull-right">
+							<button class="btn btn-success form-control" onclick="reLoad()">查询</button>
+						</div>
+						<div class="columns pull-right col-md-2 nopadding">
+							<input id="pAgent" name="pAgent" type="text" class="form-control"
+								   placeholder="输入代理商号">
+						</div>
+						<div class="columns pull-right col-md-2 nopadding">
+							<input id="merchNo" type="text" class="form-control" placeholder="输入商户号">
+						</div>
+						<div class="columns pull-right col-md-2 nopadding">
+							<input id="merchantsName" type="text" class="form-control"
+								placeholder="输入商户名称">
+						</div>
+						<div class="columns pull-right col-md-2 nopadding">
+							<select id="status" name="status" class="form-control">
+								<option value="">状态</option>
+								<option th:each="s:${status}" th:value="${s.key}" th:text="${s.value}"></option>
+							</select>
+						</div>
+						<div class="columns pull-right col-md-2 nopadding">
+							<select id="payChannelType" name="payChannelType" class="form-control">
+								<option value="">通道分类</option>
+								<option th:each="as:${payChannelType}" th:value="${as.key}" th:text="${as.value}"></option>
+							</select>
+						</div>
+					</div>
+					<table id="exampleTable" data-mobile-responsive="true">
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!--shiro控制bootstraptable行内按钮看见性 来自bootdo的创新方案 -->
+		<div>
+			<script type="text/javascript">
+				var s_edit_h = 'hidden';
+				var s_batch_audit = 'disabled';
+				var s_batch_oerate = 'disabled';
+				var s_batch_paid = 'disabled';
+				var s_batch_withdrawal = 'disabled';
+				var s_query_money = 'disabled';
+				var s_query_money = 'disabled';
+				var s_send_email = 'hidden';
+			</script>
+		</div>
+		<div shiro:hasPermission="pay:merchant:sendEmail">
+			<script type="text/javascript">
+			s_send_email = '';
+			</script>
+		</div>
+		<div shiro:hasPermission="pay:merchant:edit">
+			<script type="text/javascript">
+				s_edit_h = '';
+			</script>
+		</div>
+		<div shiro:hasPermission="pay:merchant:batchAudit">
+			<script type="text/javascript">
+				var s_batch_audit = '';
+			</script>
+		</div>
+		<div shiro:hasPermission="pay:merchant:batchOperate">
+			<script type="text/javascript">
+				var s_batch_oerate = '';
+			</script>
+		</div>
+		<div shiro:hasPermission="pay:merchant:batchWithdrawal">
+			<script type="text/javascript">
+				var s_batch_withdrawal = '';
+			</script>
+		</div>	
+		<div shiro:hasPermission="pay:merchant:batchPaid">
+			<script type="text/javascript">
+				var s_batch_paid = '';
+			</script>
+		</div>
+		<div shiro:hasPermission="moneyacct:merchant">
+			<script type="text/javascript">
+				var s_query_money = '';
+			</script>
+		</div>
+	<div th:include="include :: footer"></div>
+	<script th:inline="javascript">
+	/*<![CDATA[*/
+	    var outChannels = [[${outChannels}]];
+	    var auditStatus = [[${auditStatus}]];
+	    var auditStatusColor = [[${auditStatusColor}]];
+	    var statuss = [[${status}]];
+	    var payChannelType = [[${payChannelType}]];
+	/*]]>*/
+	</script>
+	<script type="text/javascript" src="/js/plugins/switch/bootstrap-switch.min.js" ></script>
+	<script type="text/javascript" src="/js/jquery.selectBoxIt.min.js"></script>
+	<script type="text/javascript">
+        var prefix = "/pay/merchant"
+        $(function() {
+            load();
+/*            $('#pAgent').change(function(){
+                var subAgent = $(this).val();
+                findSecondByAgent(subAgent);
+            });*/
+        });
+        var firstSwitch = true;
+        var channelSwitchs = new Object();
+        var feeRates = new Object();
+
+
+        function load() {
+            var columns = [{
+                field : 'merchNo',
+                align : 'center',
+                title : '商户号-名称',
+                formatter:function(value, row, index){
+                    return value + "-" + row.merchantsName;
+                }
+            },
+			{
+				field : 'parentAgent',
+				align : 'center',
+				title : '上级代理名称'
+			},{
+				field : 'payChannelType',
+				align : 'center',
+				title : '通道分类' ,
+				formatter:function(value, row, index){
+					return payChannelType[value];
+				}
+			},
+			// {
+			// 	field : 'auditStatus',
+			// 	title : '审核状态',
+			// 	align : 'center',
+			// 	formatter : function(value, row, index){
+			// 		if(value == 0 && s_batch_audit == '')
+			// 			return '<input name="switch" type="checkbox" '+s_batch_audit+' data-user-id="'+row.userId+'" data-size="small" data-on-text="正在审核" data-label-text="审核中" data-off-text="点击审核" data-on-color="info" data-off-color="info">';
+			// 		else
+			// 			return  "<span class='label label-"+auditStatusColor[value]+"'>"+auditStatus[value]+"</span>";
+			// 	}
+			// },
+			{
+				field : 'status',
+				title : '状态 ',
+				align : 'center',
+				formatter : function(value, row, index){
+					if(s_batch_oerate == ''){
+						var checked = value==1?"checked":"";
+						return '<div class="switch">'+
+							'<div class="onoffswitch">'+
+							'<input type="checkbox" '+checked+' '+s_batch_oerate+' class="onoffswitch-checkbox" id="example'+index+'" onclick="batchOperate('+row.userId+',this)">'+
+							'<label class="onoffswitch-label" for="example'+index+'">'+
+							'<span class="onoffswitch-inner"></span><span class="onoffswitch-switch"></span>'+
+							' </label>'+
+							' </div>'+
+							'</div>';
+					}else{
+						var color = value==1?"primary":"danger";
+						return "<span class='label label-"+color+"'>"+statuss[value]+"</span>";
+					}
+				}
+			},
+			{
+				field : 'crtTime',
+				align : 'center',
+				title : '创建时间',
+				formatter : function(value, row, index){
+					if(value){
+						return value.substring(0,16);
+					}
+					return value;
+				}
+			}];
+            // if(s_send_email == ''){
+            //     columns.push({
+            //         field : 'sendEmail',
+            //         title : '发送邮箱' ,
+            //         align : 'center',
+            //         formatter : function(value, row, index){
+            //             var text= "发送";
+            //             return '<a class="btn btn-success btn-sm" href="#" id="pk' + row.merchNo  + '" mce_href="#" onclick="sendEmail(\''
+            //                 + row.merchNo+'\',\''+0
+            //                 + '\')"><i class="fa fa-key"></i> '+text+'</a>';
+            //         }
+            //     });
+            // }
+            if(s_edit_h == ''){
+                columns.push({
+                    field : 'publicKey',
+                    title : '密钥配置' ,
+                    align : 'center',
+                    formatter : function(value, row, index){
+                        var text= "配置";
+                        return '<a class="btn btn-success btn-sm" href="#" id="pk' + row.merchNo  + '" mce_href="#" onclick="lookPublicKey(\''
+                            + row.merchNo+'\',\'' + row.publicKey
+                            + '\')"><i class="fa fa-key"></i> '+text+'</a>';
+                    }
+                });
+                columns.push({
+                    field : 'feeRate',
+                    title : '费率信息',
+					visible: false,
+                    align : 'center',
+                    formatter : function(value, row, index){
+                        feeRates[index] = value;
+                        return '<a class="btn btn-primary btn-sm" href="#" mce_href="#" onclick="lookFeeRate(\''
+                            + row.merchNo+'\')"><i class="fa fa-eye"></i> 查看/修改</a>';
+                    }
+                });
+                columns.push({
+                    field : 'agentInfo',
+                    title : '实名信息' ,
+					visible:false,
+                    align : 'center',
+                    formatter : function(value, row, index){
+                        return '<a class="btn btn-primary btn-sm" href="#"  mce_href="#" onclick="merchantInfo(\''
+                            + row.merchNo+'\')"><i class="fa fa-eye"></i> 查看/修改</a>';
+                    }
+                });
+                columns.push({
+                    title : '基本信息',
+                    field : 'id',
+                    align : 'center',
+                    formatter : function(value, row, index) {
+                        var e = '<a class="btn btn-primary btn-sm '+s_edit_h+'" href="#" mce_href="#" onclick="edit(\''
+                            + row.merchNo
+                            + '\')"><i class="fa fa-edit"></i> 查看/修改</a> ';
+						e=e+ '  <a class="btn btn-primary" href="#" title="" onclick="del(\''
+								+ row.merchNo + '\')"><i class="fa fa-edit"></i> 删除</a> ';
+                        return e;
+                    }
+                });
+            }else{
+                columns.push({
+                    title : '查看详情',
+                    field : 'id',
+                    align : 'center',
+                    formatter : function(value, row, index) {
+                        var e = '<a class="btn btn-primary" href="#" title="" onclick="infoQuery(\''
+                            + row.merchNo
+                            + '\')"><i class="fa fa-eye"></i> 详情</a> ';
+                        return e;
+                    }
+                });
+            }
+            if(s_query_money == ""){
+                columns.push({
+                    title : '查看钱包',
+                    field : 'id',
+                    align : 'center',
+                    formatter : function(value, row, index) {
+                        var e = '<a class="btn btn-primary" href="#" title="" onclick="showMoneyDetail(\''
+                            + row.merchNo
+                            + '\')"><i class="fa fa-eye"></i> 钱包</a> ';
+                        return e;
+                    }
+                });
+            }
+            var queryParams = {};
+            var secondAgent = $('#secondAgent').val();
+			if(secondAgent){
+			    queryParams= {
+                    merchNo:$('#merchNo').val(),
+                    status:$('#status').val(),
+                    merchantsName:$("#merchantsName").val(),
+                    payChannelType:$("#payChannelType").val(),
+                    pAgent:secondAgent
+				}
+			}else {
+                queryParams= {
+                    merchNo:$('#merchNo').val(),
+                    status:$('#status').val(),
+                    merchantsName:$("#merchantsName").val(),
+                    payChannelType:$("#payChannelType").val(),
+                    pAgent:$('#pAgent').val()
+                }
+			}
+
+            $('#exampleTable').bootstrapTable({
+                method : 'get', // 服务器数据的请求方式 get or post
+                url : prefix + "/list", // 服务器数据的加载地址
+                iconSize : 'outline',
+                toolbar : '#exampleToolbar',
+                striped : true, // 设置为true会有隔行变色效果
+                dataType : "json", // 服务器返回的数据类型
+                pagination : true, // 设置为true会在底部显示分页条
+                // //设置为limit则会发送符合RESTFull格式的参数
+                singleSelect : false, // 设置为true将禁止多选
+                // //发送到服务器的数据编码类型
+                pageSize : 10, // 如果设置了分页，每页数据条数
+                pageNumber : 1, // 如果设置了分布，首页页码
+                showColumns : false, // 是否显示内容下拉框（选择显示的列）
+                sidePagination : "server", // 设置在哪里进行分页，可选值为"client" 或者 "server"
+                queryParams : function(params) {
+                    queryParams.limit = params.limit;
+                    queryParams.offset = params.offset;
+                    return queryParams;
+                },
+                onLoadSuccess:function(){
+                    createSwitch();
+                    firstSwitch = false;
+                },
+                onToggle:function(){
+                    if(!firstSwitch)
+                        createSwitch();
+                },
+                columns : columns
+            });
+        }
+        function reLoad() {
+            $('#exampleTable').bootstrapTable('destroy');
+            load();
+        }
+
+        function lookChannelSwitch(merchNo, index){
+            var result = "未开启任何渠道";
+            var channelSwitch = channelSwitchs[index];
+            if(channelSwitch){
+                result = "";
+                for(var key in channelSwitch){
+                    result += outChannels[key] + " 开启<br>";
+                }
+            }
+            layer.open({
+                title:merchNo + "渠道开启详情",
+                content: result //数组第二项即吸附元素选择器或者DOM
+            });
+        }
+
+        function lookPublicKey(merchNo,publicKey){
+            layer.open({
+                type : 2,
+                title : '秘钥设置(默认生成RSA,若需用Md5,则使用RSA私钥)',
+                maxmin : true,
+                shadeClose : false, // 点击遮罩关闭层
+                area : [ '550px', '300px' ],
+                content : prefix + '/RSAConfig/'+merchNo // iframe的url
+            });
+        }
+        function add() {
+            layer.open({
+                type : 2,
+                title : '增加',
+                maxmin : true,
+                shadeClose : false, // 点击遮罩关闭层
+                area : [ '950px', '650px' ],
+                content : prefix + '/add' // iframe的url
+            });
+        }
+
+        function merchantInfo(agentNum){
+            layer.open({
+                type : 2,
+                title : '商户实名信息',
+                maxmin : true,
+                shadeClose : false, // 点击遮罩关闭层
+                area : [ '950px', '650px' ],
+                content : prefix + '/merchantInfo/' + agentNum // iframe的url
+            });
+        }
+
+        function lookFeeRate(merchNo){
+            layer.open({
+                type : 2,
+                title : '商户费率信息',
+                maxmin : true,
+                shadeClose : false, // 点击遮罩关闭层
+                area : [ '1050px', '420px' ],
+                content : prefix + '/rateInfo/' + merchNo // iframe的url
+            });
+        }
+        function edit(merchNo) {
+            layer.open({
+                type : 2,
+                title : merchNo + '商户信息修改',
+                maxmin : true,
+                shadeClose : false, // 点击遮罩关闭层
+                area : [ '1050px', '420px' ],
+                content : prefix + '/edit/' + merchNo // iframe的url
+            });
+        }
+
+        function infoQuery(merchNo){
+            layer.open({
+                type : 2,
+                title : merchNo + ' 商户信息',
+                maxmin : true,
+                shadeClose : false, // 点击遮罩关闭层
+                area : [ '950px', '420px' ],
+                content : prefix + '/infoQuery?merNo=' + merchNo // iframe的url
+            });
+        }
+
+        function showMoneyDetail(merchNo) {
+            var index = layer.open({
+                type : 2,
+                title : merchNo + ' 商户钱包详情',
+                maxmin : true,
+                shadeClose : false, // 点击遮罩关闭层
+                area : [ '950px', '420px' ],
+                maxmin: true,
+                content :  '/moneyacct/merchant/detail/' + merchNo // iframe的url
+            });
+            layer.full(index);
+        }
+
+        function del(merchNo) {
+            layer.confirm('确定要删除选中的记录？', {
+                btn : [ '确定', '取消' ]
+            }, function() {
+                $.ajax({
+                    url : prefix+"/remove",
+                    type : "post",
+                    data : {
+                        'merchNo' : merchNo
+                    },
+                    success : function(r) {
+                        if (r.code == 1) {
+                            layer.msg(r.msg);
+                            reLoad();
+                        }else{
+                            layer.msg(r.msg);
+                        }
+                    }
+                });
+            })
+        }
+
+        function batchRemove() {
+            var rows = $('#exampleTable').bootstrapTable('getSelections'); // 返回所有选择的行，当没有选择的记录时，返回一个空数组
+            if (rows.length == 0) {
+                layer.msg("请选择要删除的数据");
+                return;
+            }
+            layer.confirm("确认要删除选中的'" + rows.length + "'条数据吗?", {
+                btn : [ '确定', '取消' ]
+                // 按钮
+            }, function() {
+                var merchNos = new Array();
+                // 遍历所有选择的行数据，取每条数据对应的ID
+                $.each(rows, function(i, row) {
+                    merchNos[i] = row['merchNo'];
+                });
+                $.ajax({
+                    type : 'POST',
+                    data : {
+                        "merchNos" : merchNos
+                    },
+                    url : prefix + '/batchRemove',
+                    success : function(r) {
+                        if (r.code == 1) {
+                            layer.msg(r.msg);
+                            reLoad();
+                        } else {
+                            layer.msg(r.msg);
+                        }
+                    }
+                });
+            }, function() {
+
+            });
+        }
+
+        //flag 1:启用 2:禁用
+        function batchOperate(userId,obj) {
+            var state = $(obj).is(":checked");
+            var mess = state?'启用':'禁用';
+            var flag = state?1:0;
+            layer.confirm("确认要 " + mess + " 吗?", {
+                btn : [ '确定', '取消' ]
+                // 按钮
+            }, function() {
+                var merchantIds = new Array();
+                merchantIds[0] = ""+userId;
+                $.ajax({
+                    type : 'POST',
+                    data : {
+                        "merchantIds" : merchantIds,
+                        "flag":flag
+                    },
+                    url : prefix + '/batchOperate',
+                    success : function(r) {
+                        if (r.code == 1) {
+                            layer.msg(r.msg);
+                            reLoad();
+
+                        } else {
+                            $(obj).prop("checked",!state);
+                            layer.msg(r.msg);
+                        }
+                    }
+                });
+
+
+            }, function() {
+                $(obj).prop("checked",!state);
+            },function() {
+
+            });
+        }
+
+        //flag 1:启用 2:禁用
+        function batchPaid(userId,obj) {
+            var state = $(obj).is(":checked");
+            var mess = state?'启用':'禁用';
+            var flag = state?1:0;
+            layer.confirm("确认要 " + mess + " 代付状态吗?", {
+                btn : [ '确定', '取消' ]
+                // 按钮
+            }, function() {
+                var merchantIds = new Array();
+                merchantIds[0] = ""+userId;
+                $.ajax({
+                    type : 'POST',
+                    data : {
+                        "merchantIds" : merchantIds,
+                        "flag":flag
+                    },
+                    url : prefix + '/batchPaid',
+                    success : function(r) {
+                        if (r.code == 1) {
+                            layer.msg(r.msg);
+                            reLoad();
+                        } else {
+                            layer.msg(r.msg);
+                        }
+                    }
+                });
+            }, function() {
+                $(obj).prop("checked",!state);
+            });
+        }
+
+        //flag 1:启用 2:禁用
+        function batchWithdrawal(userId,obj) {
+            var state = $(obj).is(":checked");
+            var mess = state?'启用':'禁用';
+            var flag = state?1:0;
+            layer.confirm("确认要 " + mess + " 提现状态吗?", {
+                btn : [ '确定', '取消' ]
+                // 按钮
+            }, function() {
+                var merchantIds = new Array();
+                merchantIds[0] = ""+userId;
+                $.ajax({
+                    type : 'POST',
+                    data : {
+                        "merchantIds" : merchantIds,
+                        "flag":flag
+                    },
+                    url : prefix + '/batchWithdrawal',
+                    success : function(r) {
+                        if (r.code == 1) {
+                            layer.msg(r.msg);
+                            reLoad();
+                        } else {
+                            layer.msg(r.msg);
+                        }
+                    }
+                });
+            }, function() {
+                $(obj).prop("checked",!state);
+            });
+        }
+
+        function batchAudit(userId,obj) {
+            var merchantIds = new Array();
+            merchantIds[0] = ""+userId;
+            var auditLayer = layer.confirm("请选择审核状态!", {
+                title:'审核',
+                closeBtn:0,
+                btn : [ '通过', '不通过','关闭']
+                , btn1:function() {
+                    $.ajax({
+                        type : 'POST',
+                        data : {
+                            "merchantIds" : merchantIds,
+                            "flag":true
+                        },
+                        url : prefix + '/batchAudit',
+                        success : function(r) {
+                            if (r.code == 1) {
+                                layer.msg(r.msg);
+                                reLoad();
+                            } else {
+                                layer.msg(r.msg);
+                            }
+                        }
+                    });
+                }, btn2:function() {
+                    $.ajax({
+                        type : 'POST',
+                        data : {
+                            "merchantIds" : merchantIds,
+                            "flag":false
+                        },
+                        url : prefix + '/batchAudit',
+                        success : function(r) {
+                            if (r.code == 1) {
+                                layer.msg(r.msg);
+                                reLoad();
+                            } else {
+                                layer.msg(r.msg);
+                            }
+                        }
+                    });
+                },btn3:function(){
+                    $(obj).bootstrapSwitch("state",false,true);
+                    layer.close(auditLayer);
+                }});
+        }
+
+
+        function createSwitch(){
+            $(':checkbox[name=switch]').not('[data-switch-no-init]').bootstrapSwitch({
+                onSwitchChange: function (event, state) {
+                    var userId = $(this).data('user-id');
+                    console.log(state,userId);
+                    return batchAudit(userId,this);
+                }
+            });
+        }
+
+        function sendEmail(merchNo,state) {
+            $.ajax({
+                type : 'POST',
+                data : {
+                    "merchNo" : merchNo,
+                    "state":state
+                },
+                url : prefix + '/sendEmail',
+                success : function(r) {
+                    if (r.code == 1) {
+                        layer.msg("发送成功");
+                        reLoad();
+                    } else {
+                        if("已发送邮箱"== r.msg){
+                            layer.confirm("已经发送过该邮箱，请问是否继续发送？", {
+                                title: '继续发送',
+                                closeBtn: 0,
+                                btn: ['是', '否']
+                                , btn1: function () {
+                                    sendEmail(merchNo, 1);
+                                }, btn2: function () {
+
+                                }
+                            });
+                        }else {
+                            layer.msg(r.msg);
+                        }
+
+                    }
+                }
+            });
+        }
+
+/*        function findSecondByAgent(subAgent){
+			$.ajax({
+				cache : true,
+				type : "get",
+				url : "/pay/agent/findSecondBySubAgent",
+				data : {parentAgent : subAgent},
+				async : false,
+				error : function(request) {
+					parent.layer.alert("Connection error");
+				},
+				success : function(data) {
+					if (data.code == 1) {
+						if(data.data){
+							var datas = data.data;
+							var $selMerch = $("#secondAgent");
+							$selMerch.find("option").remove();
+							$selMerch.append("<option value=''>请选二级代理</option>");
+							for ( var i in datas) {
+								$selMerch.append("<option value='"+datas[i].agentNumber+"'>"+datas[i].agentName+"</option>");
+							}
+						}
+					} else {
+						parent.layer.alert(data.msg);
+					}
+				}
+			});
+        }*/
+
+	</script>
+</body>
+</html>

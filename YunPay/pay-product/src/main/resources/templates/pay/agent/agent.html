@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.w3.org/1999/xhtml" xmlns:shiro="http://www.w3.org/1999/xhtml">
+<meta charset="utf-8">
+<head th:include="include :: header"></head>
+<link rel="stylesheet" href="/css/plugins/switch/bootstrap-switch.min.css"/>
+<style>
+.onoffswitch-inner:before {
+    content: "开启";
+    background-color: #1ab394;
+    color: #FFFFFF;
+    text-align: left;
+}
+
+.onoffswitch-inner:after {
+    content: "禁用";
+    background-color: #FFFFFF;
+    color: #999999;
+    text-align: right;
+}
+</style>
+<body class="gray-bg">
+	<div class="wrapper wrapper-content ">
+		<div class="col-sm-12">
+			<div class="ibox">
+				<div class="ibox-body">
+					<div class="fixed-table-toolbar">
+						<div class="columns pull-right">
+							<button class="btn btn-success form-control" onclick="reLoad()">查询</button>
+						</div>
+						<div class="columns pull-right col-md-2 nopadding">
+							<input id="agentNum" type="text" class="form-control" placeholder="代理商户号">
+						</div>
+						<div class="columns pull-right col-md-2 nopadding">
+							<input id="agentName" type="text" class="form-control" placeholder="代理商名称">
+						</div>
+						<div class="columns pull-right col-md-2 nopadding">
+							<select id="status" name="status" class="form-control">
+								<option value="">状态</option>
+								<option th:each="s:${status}" th:value="${s.key}" th:text="${s.value}"></option>
+							</select>
+						</div>
+						<div class="columns pull-right col-md-2 nopadding">
+							<select id="auditStatus" name="auditStatus" class="form-control">
+								<option value="">审核状态</option>
+								<option th:each="as:${auditStatus}" th:value="${as.key}" th:text="${as.value}"></option>
+							</select>
+						</div>
+						<div class="columns pull-right col-md-2 nopadding">
+							<select id="payChannelType" name="payChannelType" class="form-control">
+								<option value="">通道分类</option>
+								<option th:each="as:${payChannelTypes}" th:value="${as.key}" th:text="${as.value}"></option>
+							</select>
+						</div>
+					</div>
+					<table id="exampleTable" data-mobile-responsive="true">
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!--shiro控制bootstraptable行内按钮看见性 来自bootdo的创新方案 -->
+		<div>
+			<script type="text/javascript">
+				var s_edit_h = 'hidden';
+				var s_batch_oerate = 'disabled';
+				var s_batch_audit = 'disabled';
+				var s_query_money = 'disabled';
+			</script>
+		</div>
+		<div shiro:hasPermission="pay:agent:edit">
+			<script type="text/javascript">
+				s_edit_h = '';
+			</script>
+		</div>
+		<div shiro:hasPermission="pay:agent:remove">
+			<script type="text/javascript">
+				var s_remove_h = '';
+			</script>
+		</div>
+		<div shiro:hasPermission="pay:agent:resetPwd">
+			<script type="text/javascript">
+				var s_resetPwd_h = '';
+			</script>
+		</div>
+		<div shiro:hasPermission="pay:agent:batchOperate">
+			<script type="text/javascript">
+				var s_batch_oerate = '';
+			</script>
+		</div>
+		<div shiro:hasPermission="pay:agent:batchAudit">
+			<script type="text/javascript">
+				var s_batch_audit = '';
+			</script>
+		</div>
+		<div shiro:hasPermission="moneyacct:agent">
+			<script type="text/javascript">
+				var s_query_money = '';
+			</script>
+		</div>
+	<div th:include="include :: footer"></div>
+	<script th:inline="javascript">
+	/*<![CDATA[*/
+	    var auditStatus = [[${auditStatus}]];
+    	var payChannelTypes = [[${payChannelTypes}]];
+    	var auditStatusColor = [[${auditStatusColor}]];
+	    var statuss = [[${status}]];
+	/*]]>*/
+	</script>
+	<script type="text/javascript" src="/js/plugins/switch/bootstrap-switch.min.js" ></script>
+	<script type="text/javascript" src="/js/appjs/pay/comm.js"></script>
+	<script type="text/javascript">
+
+        var prefix = "/pay/agent"
+        $(function() {
+            load();
+        });
+        var firstSwitch = true;
+        var feeRates = new Object();
+        function load() {
+            var columns = [{
+                field : 'agentNumber',
+                align : 'center',
+                title : '代理商户号 '
+            },
+                {
+                    field : 'agentName',
+                    align : 'center',
+                    title : '代理商名称'
+                },{
+                    field : 'payChannelType',
+                    align : 'center',
+                    title : '通道分类' ,
+                    formatter:function(value, row, index){
+                        return payChannelTypes[value];
+                    }
+                },
+                {
+                    field : 'contacts',
+                    align : 'center',
+                    title : '联系人'
+                },
+                {
+                    field : 'contactsPhone',
+                    align : 'center',
+                    title : '联系人电话'
+                },
+                {
+                    field : 'parentAgent',
+                    align : 'center',
+                    title : '上级代理名称 '
+                },
+                {
+                    field : 'createTime',
+                    align : 'center',
+                    title : '创建时间',
+                    formatter : function(value, row, index){
+                        if(value){
+                            return value.substring(0,16);
+						}
+						return value;
+					}
+                },
+                {
+                    field : 'auditStatus',
+                    title : '审核状态 ',
+                    align : 'center',
+                    formatter : function(value, row, index){
+                        if(value == 0 && s_batch_audit == '')
+                            return '<input name="switch" type="checkbox" '+s_batch_audit+' data-agent-id="'+row.agentId+'" data-size="small" data-on-text="正在审核" data-label-text="审核中" data-off-text="点击审核" data-on-color="info" data-off-color="info">';
+                        else
+                            return  "<span class='label label-"+auditStatusColor[value]+"'>"+auditStatus[value]+"</span>";
+                    }
+                },
+                {
+                    field : 'status',
+                    title : '状态 ',
+                    align : 'center',
+                    formatter : function(value, row, index){
+                        if(s_batch_oerate == ''){
+                            var checked = value==1?"checked":"";
+                            return '<div class="switch">'+
+                                '<div class="onoffswitch">'+
+                                '<input type="checkbox" '+checked+' '+s_batch_oerate+' class="onoffswitch-checkbox" id="example'+index+'" onclick="batchOperate('+row.agentId+',this)">'+
+                                '<label class="onoffswitch-label" for="example'+index+'">'+
+                                '<span class="onoffswitch-inner"></span><span class="onoffswitch-switch"></span>'+
+                                ' </label>'+
+                                ' </div>'+
+                                '</div>';
+                        }else{
+                            var color = value==1?"primary":"danger";
+                            return "<span class='label label-"+color+"'>"+statuss[value]+"</span>";
+                        }
+                    }
+                }];
+
+            if(s_edit_h == ''){
+                columns.push({
+                    field : 'coinRate',
+                    title : '币费率' ,
+                    visible:false,
+                    align : 'center',
+                    formatter : function(value, row, index){
+                        feeRates[index] = value;
+                        return '<a class="btn btn-primary btn-sm" href="#" mce_href="#" onclick="lookFeeRate(\''
+                            + row.agentId+'\')"><i class="fa fa-edit"></i> 查看/修改</a>';
+                    }
+                });
+                columns.push({
+                    field : 'agentInfo',
+                    title : '实名信息' ,
+					visible:false,
+                    align : 'center',
+                    formatter : function(value, row, index){
+                        return '<a class="btn btn-primary btn-sm" href="#" mce_href="#" onclick="agentInfo(\''
+                            + row.agentId+'\')"><i class="fa fa-edit"></i> 查看/修改</a>';
+                    }
+                });
+                columns.push({
+                    title : '基本信息',
+                    field : 'id',
+                    align : 'center',
+                    formatter : function(value, row, index) {
+                        var e = '<a class="btn btn-primary" href="#" title="" onclick="edit(\''
+                            + row.agentId + '\',\'' + row.agentNumber
+                            + '\')"><i class="fa fa-edit"></i> 查看/修改</a> ';
+                        e=e+ '  <a class="btn btn-primary" href="#" title="" onclick="del(\''
+								+ row.agentId + '\')"><i class="fa fa-edit"></i> 删除</a> ';
+                        return e;
+                    }
+                });
+            }else{
+                columns.push({
+                    title : '查看',
+                    field : 'id',
+                    align : 'center',
+                    formatter : function(value, row, index) {
+                        var e = '<a class="btn btn-primary" href="#" title="" onclick="infoQuery(\''
+                            + row.agentNumber
+                            + '\')"><i class="fa fa-eye"></i> 详情</a> ';
+                        return e;
+                    }
+                });
+            }
+
+            if(s_query_money == ""){
+                columns.push({
+                    title : '查看钱包',
+                    field : 'id',
+                    align : 'center',
+                    formatter : function(value, row, index) {
+                        var e = '<a class="btn btn-primary" href="#" title="" onclick="showMoneyDetail(\''
+                            + row.agentNumber
+                            + '\')"><i class="fa fa-eye"></i> 钱包</a> ';
+                        return e;
+                    }
+                });
+            }
+            $('#exampleTable').bootstrapTable({
+                method : 'get', // 服务器数据的请求方式 get or post
+                url : prefix + "/list", // 服务器数据的加载地址
+                iconSize : 'outline',
+                toolbar : '#exampleToolbar',
+                striped : true, // 设置为true会有隔行变色效果
+                dataType : "json", // 服务器返回的数据类型
+                pagination : true, // 设置为true会在底部显示分页条
+                // //设置为limit则会发送符合RESTFull格式的参数
+                singleSelect : false, // 设置为true将禁止多选
+                // //发送到服务器的数据编码类型
+                pageSize : 10, // 如果设置了分页，每页数据条数
+                pageNumber : 1, // 如果设置了分布，首页页码
+                showColumns : false, // 是否显示内容下拉框（选择显示的列）
+                sidePagination : "server", // 设置在哪里进行分页，可选值为"client" 或者 "server"
+                queryParams : function(params) {
+                    return {
+                        //说明：传入后台的参数包括offset开始索引，limit步长，sort排序列，order：desc或者,以及所有列的键值对
+                        limit: params.limit,
+                        offset:params.offset,
+                        agentNumber:$('#agentNum').val(),
+                        agentName:$('#agentName').val(),
+                        status:$('#status').val(),
+                        auditStatus:$('#auditStatus').val(),
+                        payChannelType:$("#payChannelType").val()
+                    };
+                },
+                onLoadSuccess:function(){
+                    createSwitch();
+                    firstSwitch = false;
+                },
+                onToggle:function(){
+                    if(!firstSwitch)
+                        createSwitch();
+                },
+                columns : columns
+            });
+        }
+        function reLoad() {
+            $('#exampleTable').bootstrapTable('refresh');
+        }
+
+        function agentInfo(agentNum){
+            layer.open({
+                type : 2,
+                title : '代理实名信息',
+                maxmin : true,
+                shadeClose : false, // 点击遮罩关闭层
+                area : [ '950px', '420px' ],
+                content : prefix + '/agentInfo/' + agentNum // iframe的url
+            });
+        }
+
+        function lookFeeRate(merchNo){
+            layer.open({
+                type : 2,
+                title : '代理费率信息',
+                maxmin : true,
+                shadeClose : false, // 点击遮罩关闭层
+                area : [ '950px', '420px' ],
+                content : prefix + '/rateInfo/' + merchNo // iframe的url
+            });
+        }
+
+        function infoQuery(agentNumber){
+            layer.open({
+                type : 2,
+                title : agentNumber + ' 代理信息',
+                maxmin : true,
+                shadeClose : false, // 点击遮罩关闭层
+                area : [ '950px', '420px' ],
+                content : prefix + '/infoQuery?agentNo=' + agentNumber // iframe的url
+            });
+        }
+
+        function add() {
+            var layero = layer.open({
+                type : 2,
+                title : '增加',
+                maxmin : true,
+                shadeClose : false, // 点击遮罩关闭层
+                area : [ '1050px', '420px' ],
+                content : prefix + '/add' // iframe的url
+            });
+            layer.full(layero);
+        }
+        function edit(agentId,agentNum) {
+            layer.open({
+                type : 2,
+                title : agentNum + ' 代理信息修改',
+                maxmin : true,
+                shadeClose : false, // 点击遮罩关闭层
+                area : [ '950px', '420px' ],
+                content : prefix + '/edit/' + agentId // iframe的url
+            });
+        }
+
+		function del(agentId) {
+			layer.confirm('确定要删除选中的代理商？', {
+				btn : [ '确定', '取消' ]
+			}, function() {
+				$.ajax({
+					url : prefix+"/remove",
+					type : "POST",
+					data : {
+						'agentId' : agentId
+					},
+					success : function(r) {
+						if (r.code==1) {
+							layer.msg(r.msg);
+							reLoad();
+						}else{
+							layer.msg(r.msg);
+						}
+					}
+				});
+			})
+		}
+
+
+		//flag 1:启用 0:禁用
+        function batchOperate(agentId,obj) {
+            var state = $(obj).is(":checked");
+            var mess = state?'启用':'禁用';
+            var flag = state?1:0;
+            layer.confirm("确认要 " + mess + " 吗?", {
+                btn : [ '确定', '取消' ]
+                // 按钮
+            }, function() {
+                var agentIds = new Array();
+                agentIds[0] = ""+agentId;
+                $.ajax({
+                    type : 'POST',
+                    data : {
+                        "agentIds" : agentIds,
+                        "flag":flag
+                    },
+                    url : prefix + '/batchOperate',
+                    success : function(r) {
+                        if (r.code == 1) {
+                            layer.msg(r.msg);
+                            reLoad();
+                        } else {
+                            layer.msg(r.msg);
+                            $(obj).prop("checked",!state);
+                        }
+                    }
+                });
+            }, function() {
+                $(obj).prop("checked",!state);
+            });
+        }
+
+        function batchAudit(agentId,obj) {
+
+            var agentIds = new Array();
+            agentIds[0] = ""+agentId;
+            layer.confirm("请选择审核状态!", {
+                title:'资料审核',
+                closeBtn:0,
+                btn : [ '通过', '不通过','关闭']
+                // 按钮
+                , btn1:function() {
+                    $.ajax({
+                        type : 'POST',
+                        data : {
+                            "agentIds" : agentIds,
+                            "flag":true
+                        },
+                        url : prefix + '/batchAudit',
+                        success : function(r) {
+                            if (r.code == 1) {
+                                layer.msg(r.msg);
+                                reLoad();
+                            } else {
+                                layer.msg(r.msg);
+                            }
+                        }
+                    });
+                }, btn2:function() {
+                    $.ajax({
+                        type : 'POST',
+                        data : {
+                            "agentIds" : agentIds,
+                            "flag":false
+                        },
+                        url : prefix + '/batchAudit',
+                        success : function(r) {
+                            if (r.code == 1) {
+                                layer.msg(r.msg);
+                                reLoad();
+                            } else {
+                                layer.msg(r.msg);
+                            }
+                        }
+                    });
+                },btn3:function(){$(obj).bootstrapSwitch("state",false,true);}});
+        }
+
+        function createSwitch(){
+            $(':checkbox[name=switch]').not('[data-switch-no-init]').bootstrapSwitch({
+                onSwitchChange: function (event, state) {
+                    var agentId = $(this).data('agent-id');
+                    console.log(state,agentId);
+                    return batchAudit(agentId,this);
+                }
+            });
+        }
+
+        function showMoneyDetail(agentNo) {
+            var index = layer.open({
+                type : 2,
+                title : agentNo + ' 代理商钱包详情',
+                maxmin : true,
+                shadeClose : false, // 点击遮罩关闭层
+                area : [ '800px', '420px' ],
+                maxmin: true,
+                content : '/moneyacct/agent/detail/' + agentNo // iframe的url
+            });
+            layer.full(index);
+        }
+
+	</script>
+
+</body>
+</html>

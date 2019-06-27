@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.w3.org/1999/xhtml">
+<meta charset="utf-8">
+<head th:include="include :: header"></head>
+<link rel="stylesheet" href="/css/plugins/switch/bootstrap-switch.min.css"/>
+<body class="gray-bg">
+<div class="wrapper wrapper-content ">
+    <div class="col-sm-12">
+        <div class="ibox">
+            <div class="ibox-body">
+                <div class="fixed-table-toolbar">
+                    <div class="columns pull-right">
+                        <button class="btn btn-success form-control" onclick="reLoad()">查询</button>
+                    </div>
+
+                    <div class="columns pull-right col-md-2 nopadding">
+                        <input id="merchNo" type="text" class="form-control" placeholder="输入商户号">
+                    </div>
+                    <div class="columns pull-right col-md-2 nopadding">
+                        <input id="merchantsName" type="text" class="form-control"
+                               placeholder="输入商户名称">
+                    </div>
+                </div>
+                <table id="exampleTable" data-mobile-responsive="true">
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div th:include="include :: footer"></div>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var auditStatus = [[${auditStatus}]];
+    var payChannelTypes = [[${payChannelTypes}]];
+    var auditStatusColor = [[${auditStatusColor}]];
+    var statuss = [[${status}]];
+    /*]]>*/
+</script>
+<script type="text/javascript" src="/js/plugins/switch/bootstrap-switch.min.js" ></script>
+<script type="text/javascript" src="/js/appjs/pay/comm.js"></script>
+<script type="text/javascript">
+    var prefix = "/pay/agent"
+    $(function() {
+        load();
+    });
+    function load() {
+        var columns = [
+            {
+            field : 'merchNo',
+            align : 'center',
+            title : '商户号',
+            },
+            {
+                field : 'merchantsName',
+                align : 'center',
+                title : '商户名称',
+            },
+            {
+                field : 'contactsPhone',
+                align : 'center',
+                title : '联系电话',
+            },
+            {
+                field : 'coinRate',
+                align : 'center',
+                title : '费率',
+                formatter:function (value,row,index) {
+                    return value["USDT"].rate+"%";
+                }
+            },{
+                field : 'crtTime',
+                align : 'center',
+                title : '创建时间',
+                formatter : function(value, row, index){
+                    if(value){
+                        return value.substring(0,16);
+                    }
+                    return value;
+                }
+            }];
+
+        var queryParams = {};
+        queryParams = {
+            merchNo:$('#merchNo').val(),
+            merchantsName:$('#merchantsName').val()
+        };
+
+
+        $('#exampleTable').bootstrapTable({
+            method : 'get', // 服务器数据的请求方式 get or post
+            url : prefix + "/merchantList", // 服务器数据的加载地址
+            iconSize : 'outline',
+            toolbar : '#exampleToolbar',
+            striped : true, // 设置为true会有隔行变色效果
+            dataType : "json", // 服务器返回的数据类型
+            pagination : true, // 设置为true会在底部显示分页条
+            // //设置为limit则会发送符合RESTFull格式的参数
+            singleSelect : false, // 设置为true将禁止多选
+            // //发送到服务器的数据编码类型
+            pageSize : 10, // 如果设置了分页，每页数据条数
+            pageNumber : 1, // 如果设置了分布，首页页码
+            showColumns : false, // 是否显示内容下拉框（选择显示的列）
+            sidePagination : "server", // 设置在哪里进行分页，可选值为"client" 或者 "server"
+            queryParams : function(params) {
+                console.log(1111);
+                queryParams.limit = params.limit;
+                queryParams.offset = params.offset;
+                return queryParams;
+            },
+            columns : columns
+        });
+    }
+    function reLoad() {
+        $('#exampleTable').bootstrapTable('destroy');
+        load();
+    }
+</script>
+
+</body>
+</html>

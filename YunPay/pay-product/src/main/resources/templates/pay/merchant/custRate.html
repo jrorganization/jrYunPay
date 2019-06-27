@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.w3.org/1999/xhtml">
+<meta charset="utf-8">
+<head th:include="include :: header"></head>
+<link href="/css/layui.css" rel="stylesheet">
+<body class="gray-bg">
+<div class="wrapper wrapper-content ">
+	<div class="row">
+		<div class="col-sm-12">
+			<div class="ibox float-e-margins">
+				<div class="ibox-content">
+					<form  class="form-horizontal m-t" id="signupForm">
+						<input type="hidden" th:value="${merchant.userId}" name = "userId">
+						<input type="hidden" th:value="${merchant.merchNo}" name = "merchNo">
+
+						<div class="form-group">
+							<label class="col-sm-2 control-label">商户号：</label>
+							<div class="col-sm-4 control-label" style="text-align: left">
+								<div th:text="${merchant.merchNo}"></div>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-sm-2 control-label">商户名称：</label>
+							<div class="col-sm-4 control-label" style="text-align: left">
+								<div th:text="${merchant.merchantsName}"></div>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-sm-2 control-label">费率加价说明：</label>
+							<div class="col-sm-8 control-label" style="text-align: left">
+								结果汇率 = (1 + 输入客户费率) * 实时汇率。(客户充值时，按照结果汇率折算)
+							</div>
+						</div>
+						<div class="form-group" th:each="payCoin:${payCoins}">
+							<label class="col-sm-2 control-label" th:text="${payCoin.value + ' 客户费率：'}"></label>
+							<div class="col-sm-2">
+								<input th:id ="custRate_+${payCoin.key}" class="form-control" min="0" max="1" step="0.001" type="number" required>
+							</div>
+							<div class="col-sm-2 control-label" style="text-align: left">
+								<span th:text="结果汇率："></span><span th:id ="resultRate_+${payCoin.key}"  th:text="${resultRate[payCoin.key]}"></span>
+							</div>
+							<div class="col-sm-2 control-label" style="text-align: left">
+								<span th:text="实时汇率："></span><span th:id ="accpRate_+${payCoin.key}" th:text="${accpRate[payCoin.key]}"></span>
+							</div>
+						</div>
+						<input type="hidden" id="custRateStr" name="custRateStr">
+						<div class="form-group">
+							<div class="col-sm-8 col-sm-offset-3">
+								<button type="submit" class="btn btn-primary">确认提交</button>
+							</div>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<div th:include="include::footer"></div>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    payCoins = [[${payCoins}]];
+    custRate = [[${merchant.custRate}]];
+    /*]]>*/
+</script>
+<script type="text/javascript">
+    $().ready(function() {
+        validateRule();
+        for(payCoin in payCoins){
+            var unitVal = 1;
+            if(custRate && custRate[payCoin]){
+                $("#custRate_" + payCoin).val(custRate[payCoin]);
+            }else{
+                $("#custRate_" + payCoin).val(0);
+			}
+            $("#custRate_" + payCoin).bind("change blur",function(){
+                var rate = $(this).val();
+                if(!rate){
+                    rate = 0.0;
+				}
+                $.ajax({
+                    type : "GET",
+                    url : "/pay/merchant/multBigForRate",
+                    data : {payCoin:payCoin,rate:rate},
+                    async : false,
+                    success : function(data) {
+                        if (data.code == 1) {
+							$("#resultRate_" + payCoin).text(data.custRate);
+                            $("#accpRate_" + payCoin).text(data.accpRate);
+                        } else {
+                            layer.msg(data.msg);
+                        }
+                    }
+                });
+            });
+        }
+    });
+    $.validator.setDefaults({
+        submitHandler : function() {
+            save();
+        }
+    });
+    function save() {
+        var custRate = {};
+        for(payCoin in payCoins){
+            custRate[payCoin] =  $("#custRate_" + payCoin).val() || 0;
+        }
+        $("#custRateStr").val(JSON.stringify(custRate));
+        $.ajax({
+            cache : true,
+            type : "POST",
+            url : "/pay/merchant/updateCustRate",
+            data : $('#signupForm').serialize(),// 你的formid
+            async : false,
+            error : function(request) {
+                parent.layer.alert("Connection error");
+            },
+            success : function(data) {
+                if (data.code == 1) {
+                    layer.msg("操作成功");
+                    window.reLoad();
+                } else {
+                    layer.alert(data.msg)
+                }
+            }
+        });
+
+    }
+    function validateRule() {
+        var icon = "<i class='fa fa-times-circle'></i> ";
+        $("#signupForm").validate({
+        })
+    }
+</script>
+</body>
+</html>
